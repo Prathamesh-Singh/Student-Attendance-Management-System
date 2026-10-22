@@ -7,10 +7,12 @@ Spring Boot 3.3 (Java 17) backend for the Student Attendance Management System. 
 ```
 edu.pesu.sams
 ├── config       application configuration beans (e.g. the Asia/Kolkata clock)
+├── entity       JPA entities and enums
+├── repository   Spring Data JPA repositories
 └── exception    API error type and global JSON error handler
 ```
 
-Entities and repositories are added by #3; controllers, services and DTOs by the feature issues that follow (#4 onwards).
+Controllers, services and DTOs are added by the feature issues that follow (#4 onwards).
 
 ## Prerequisites
 
@@ -45,7 +47,7 @@ cd backend
 mvn spring-boot:run
 ```
 
-Flyway applies any migrations in `src/main/resources/db/migration` on start-up. Hibernate only validates (`ddl-auto: validate`) that entities match the schema; it never changes the database itself.
+On first start Flyway applies `V1__initial_schema.sql` to the empty database. Hibernate then validates (`ddl-auto: validate`) that the entities match the schema; it never changes the database itself.
 
 ## Health endpoint
 
@@ -58,3 +60,20 @@ Expected response (HTTP 200):
 ```json
 {"status":"UP", "groups":["liveness","readiness"]}
 ```
+
+## Data model
+
+| Table | Purpose | Key constraints |
+|---|---|---|
+| `users` | Admin, faculty and student accounts (`role`) | unique `institution_id`, unique `email` |
+| `course_sections` | A course offering for a semester/section/year | unique (`course_code`, `semester`, `section_name`, `academic_year`) |
+| `course_faculty` | Faculty assigned to a course section | FKs to both, unique pair |
+| `enrolments` | Students enrolled in a course section | FKs, unique (`course_section_id`, `student_user_id`) |
+| `class_sessions` | A lecture/lab/tutorial held for a section | FK to section and creator, index on (`course_section_id`, `session_date`) |
+| `attendance_records` | PRESENT / ABSENT / OD per student per session | FKs, unique (`session_id`, `student_user_id`) |
+| `correction_requests` | Student requests to correct a record | FKs, index on (`status`, `requested_at`) |
+| `audit_log` | Who changed what and when | indexes on time, actor, action |
+| `password_reset_tokens`, `revoked_tokens` | Authentication support | unique token hash / JTI |
+| `notification_outbox`, `report_log`, `app_settings` | E-mail outbox, report history, settings such as attendance threshold | unique `setting_key` |
+
+Timestamps are stored as `DATETIME(6)` in the Asia/Kolkata time zone, and enum values (roles, statuses, session types) as strings. Schema changes must be made as new Flyway migrations (`V2__...sql`), never by editing an applied migration or the database by hand.
