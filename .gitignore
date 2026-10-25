@@ -1,0 +1,32 @@
+# Secrets and local configuration
+.env
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# Java / Maven
+backend/target/
+*.class
+*.log
+
+# Node / Vite
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDEs and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local backups / test artefacts
+backups/
+*.sql
+*.sql.gz
+*.sql.gz.enc
+coverage/
+
+# Flyway migrations are source code and must be committed
+!backend/src/main/resources/db/migration/*.sql
