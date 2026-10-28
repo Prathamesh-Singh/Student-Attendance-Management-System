@@ -1,65 +1,25 @@
 package edu.pesu.sams.controller;
 
-import edu.pesu.sams.dto.AttendanceRecordDto;
-import edu.pesu.sams.dto.AttendanceRecordResponseDto;
-import edu.pesu.sams.service.AttendanceService;
+import edu.pesu.sams.dto.*;
+import edu.pesu.sams.entity.*;
+import edu.pesu.sams.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import java.util.*;
 
-import java.util.List;
-
-@RestController
-@RequestMapping("/api/attendance")
+@RestController @RequestMapping("/api/v1")
 public class AttendanceController {
-
-    private final AttendanceService attendanceService;
-
-    public AttendanceController(AttendanceService attendanceService) {
-        this.attendanceService = attendanceService;
-    }
-
-    @PostMapping
-    public ResponseEntity<AttendanceRecordResponseDto> markAttendance(
-            @Valid @RequestBody AttendanceRecordDto dto,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        AttendanceRecordResponseDto response = attendanceService.markAttendance(dto, userDetails.getUsername());
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/session/{sessionId}")
-    public ResponseEntity<List<AttendanceRecordResponseDto>> getAttendanceBySession(
-            @PathVariable Long sessionId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        List<AttendanceRecordResponseDto> records = attendanceService.getAttendanceBySession(sessionId, userDetails.getUsername());
-        return ResponseEntity.ok(records);
-    }
-
-    @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<AttendanceRecordResponseDto>> getAttendanceByStudent(
-            @PathVariable Long studentId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        List<AttendanceRecordResponseDto> records = attendanceService.getAttendanceByStudent(studentId, userDetails.getUsername());
-        return ResponseEntity.ok(records);
-    }
-
-    @GetMapping("/student/{studentId}/section/{sectionId}")
-    public ResponseEntity<List<AttendanceRecordResponseDto>> getAttendanceByStudentAndSection(
-            @PathVariable Long studentId,
-            @PathVariable Long sectionId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        List<AttendanceRecordResponseDto> records = attendanceService.getAttendanceByStudentAndSection(studentId, sectionId, userDetails.getUsername());
-        return ResponseEntity.ok(records);
-    }
-
-    @GetMapping("/session/{sessionId}/student/{studentId}")
-    public ResponseEntity<AttendanceRecordResponseDto> getAttendanceBySessionAndStudent(
-            @PathVariable Long sessionId,
-            @PathVariable Long studentId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        AttendanceRecordResponseDto record = attendanceService.getAttendanceBySessionAndStudent(sessionId, studentId, userDetails.getUsername());
-        return ResponseEntity.ok(record);
-    }
+ private final AttendanceService attendance; private final UserManagementService management;
+ public AttendanceController(AttendanceService attendance,UserManagementService management){this.attendance=attendance;this.management=management;}
+ @PostMapping("/sessions") @PreAuthorize("hasRole('FACULTY')") public ResponseEntity<Map<String,Object>> createSession(@Valid @RequestBody CreateSessionRequest request,Authentication auth,HttpServletRequest req){return ResponseEntity.status(HttpStatus.CREATED).body(attendance.createSession(auth.getName(),request,req));}
+ @GetMapping("/sessions") public List<Map<String,Object>> sessions(Authentication auth){UserAccount u=management.requireUser(auth.getName());return attendance.listSessions(auth.getName(),u.getRole());}
+ @GetMapping("/sessions/{id}/roster") @PreAuthorize("hasRole('FACULTY')") public Map<String,Object> roster(@PathVariable Long id,Authentication auth){return attendance.roster(id,auth.getName());}
+ @PostMapping("/sessions/{id}/attendance") @PreAuthorize("hasRole('FACULTY')") public ResponseEntity<Map<String,Object>> submit(@PathVariable Long id,@Valid @RequestBody AttendanceSubmissionRequest request,Authentication auth,HttpServletRequest req){return ResponseEntity.status(HttpStatus.CREATED).body(attendance.submitAttendance(id,request,auth.getName(),req));}
+ @PutMapping("/sessions/{id}/attendance/{studentId}") @PreAuthorize("hasAnyRole('FACULTY','ADMIN')") public Map<String,Object> edit(@PathVariable Long id,@PathVariable String studentId,@Valid @RequestBody EditAttendanceRequest request,Authentication auth,HttpServletRequest req){UserAccount u=management.requireUser(auth.getName());return attendance.editAttendance(id,studentId,request,auth.getName(),u.getRole(),req);}
+ @GetMapping("/students/{studentId}/attendance") @PreAuthorize("hasRole('STUDENT')") public Map<String,Object> ownAttendance(@PathVariable String studentId,Authentication auth){return attendance.ownSummary(studentId,auth.getName());}
+ @GetMapping("/course-sections/{id}/attendance") @PreAuthorize("hasAnyRole('FACULTY','ADMIN')") public Map<String,Object> sectionAttendance(@PathVariable Long id,Authentication auth){UserAccount u=management.requireUser(auth.getName());return attendance.sectionAttendance(id,auth.getName(),u.getRole());}
 }
