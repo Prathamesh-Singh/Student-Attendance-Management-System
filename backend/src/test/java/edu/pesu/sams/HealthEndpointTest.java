@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties={
  "spring.datasource.url=jdbc:h2:mem:sams;DB_CLOSE_DELAY=-1","spring.datasource.driver-class-name=org.h2.Driver","spring.datasource.username=sa","spring.datasource.password=",
  "spring.flyway.enabled=false","spring.jpa.hibernate.ddl-auto=create-drop",
- "management.health.mail.enabled=false"})
+ "management.health.mail.enabled=false","spring.security.enabled=false"})
 @AutoConfigureMockMvc
 @org.springframework.boot.autoconfigure.EnableAutoConfiguration(exclude={org.springframework.boot.actuate.mail.MailHealthIndicatorAutoConfiguration.class})
 class HealthEndpointTest {
@@ -20,5 +20,4 @@ class HealthEndpointTest {
  @Test void healthEndpointReportsUp() throws Exception{
    mvc.perform(get("/actuator/health")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("UP"));
  }
-}
 }
