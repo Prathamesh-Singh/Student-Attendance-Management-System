@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  "spring.datasource.url=jdbc:h2:mem:sams;DB_CLOSE_DELAY=-1","spring.datasource.driver-class-name=org.h2.Driver","spring.datasource.username=sa","spring.datasource.password=",
  "spring.flyway.enabled=false","spring.jpa.hibernate.ddl-auto=create-drop",
  "management.health.mail.enabled=false","spring.security.enabled=false"})
+ "spring.security.enabled=false"})
 @AutoConfigureMockMvc
 @org.springframework.boot.autoconfigure.EnableAutoConfiguration(exclude={org.springframework.boot.actuate.mail.MailHealthIndicatorAutoConfiguration.class})
 class HealthEndpointTest {
