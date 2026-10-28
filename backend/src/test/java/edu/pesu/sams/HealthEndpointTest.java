@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "spring.security.enabled=false"
 })
 @AutoConfigureMockMvc
-@org.springframework.boot.autoconfigure.EnableAutoConfiguration(exclude={org.springframework.boot.actuate.mail.MailHealthIndicatorAutoConfiguration.class})
+@org.springframework.boot.autoconfigure.EnableAutoConfiguration(exclude={org.springframework.boot.actuate.mail.MailHealthContributorAutoConfiguration.class})
 class HealthEndpointTest {
     @Autowired MockMvc mvc;
     @Test void healthEndpointReportsUp() throws Exception{
